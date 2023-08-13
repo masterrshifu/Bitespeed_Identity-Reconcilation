@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -55,10 +56,13 @@ public class ContactService {
 
     public Contact saveContactIfExistingEmail(ContactRequest contactRequest) {
         Contact saveContact = new Contact();
-        Contact existingContact = contactRepository.findByEmail(contactRequest.getEmail());
+//        Contact existingContact = contactRepository.findByEmail(contactRequest.getEmail());
+        List<Contact> existingContact = contactRepository.findAllByEmail(contactRequest.getEmail());
+        saveContact.setEmail(contactRequest.getEmail());
         saveContact.setEmail(contactRequest.getEmail());
         saveContact.setPhoneNumber(contactRequest.getPhoneNumber());
-        saveContact.setLinkedId(existingContact.getId());
+        saveContact.setLinkedId(existingContact.stream()
+                .min(Comparator.comparing(Contact::getId)).get().getId());
         saveContact.setLinkPrecedence("Secondary");
         saveContact.setCreatedAt(LocalDateTime.now());
         saveContact.setUpdatedAt(LocalDateTime.now());
@@ -71,10 +75,11 @@ public class ContactService {
 
     public Contact saveContactIfExistingPhoneNumber(ContactRequest contactRequest) {
         Contact saveContact = new Contact();
-        Contact existingContact = contactRepository.findByPhoneNumber(contactRequest.getPhoneNumber());
+        List<Contact> existingContact = contactRepository.findAllByPhoneNumber(contactRequest.getPhoneNumber());
         saveContact.setEmail(contactRequest.getEmail());
         saveContact.setPhoneNumber(contactRequest.getPhoneNumber());
-        saveContact.setLinkedId(existingContact.getId());
+        saveContact.setLinkedId(existingContact.stream()
+                        .min(Comparator.comparing(Contact::getId)).get().getId());
         saveContact.setLinkPrecedence("Secondary");
         saveContact.setCreatedAt(LocalDateTime.now());
         saveContact.setUpdatedAt(LocalDateTime.now());
@@ -105,9 +110,6 @@ public class ContactService {
         return contactRepository.findByEmail(email);
     }
 
-    public Contact findByPhoneNumber(ContactRequest contactRequest) {
-        return contactRepository.findByPhoneNumber(contactRequest.getPhoneNumber());
-    }
 
     public List<Contact> findAll() {
         return contactRepository.findAll();
