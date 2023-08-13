@@ -34,16 +34,19 @@ public class ContactService {
                 saveContact(contactRequest);
                 contactList.addAll(findAllByEmail(contactRequest.getEmail()));
                 contactList.addAll(findAllByPhoneNUmber(contactRequest.getPhoneNumber()));
+                contactList.stream().distinct().collect(Collectors.toList());
                 saveContact = showSaveContactResponse(contactList);
         }
 
         if(email == null) {
-            contactList = contactRepository.findAllByPhoneNumber(phoneNumber);
+            contactList.addAll(contactRepository.findAllByPhoneNumber(phoneNumber));
+            contactList.addAll(contactRepository.findAllByEmail(contactList.get(0).getEmail()));
             saveContact = showSavedContactResponse(contactList);
         }
 
         if(phoneNumber == null) {
-            contactList = contactRepository.findAllByEmail(email);
+            contactList.addAll(contactRepository.findAllByEmail(email));
+            contactList.addAll(contactRepository.findAllByPhoneNumber(contactList.get(0).getPhoneNumber()));
             saveContact = showSavedContactResponse(contactList);
         }
 
@@ -59,7 +62,7 @@ public class ContactService {
                 .min(Comparator.comparing(Contact::getId)).get().getId());
         contactItems.setEmails(contactList.stream().map(Contact::getEmail).distinct().collect(Collectors.toList()));
         contactItems.setPhoneNumbers(contactList.stream().map(Contact::getPhoneNumber).distinct().collect(Collectors.toList()));
-        contactItems.setSecondaryContactIds(contactList.stream().filter(contact -> contact.getLinkPrecedence() == "Secondary").map(Contact::getId).distinct().collect(Collectors.toList()));
+        contactItems.setSecondaryContactIds(contactList.stream().filter(contact -> contact.getLinkPrecedence().equals("Secondary")).map(Contact::getLinkedId).distinct().collect(Collectors.toList()));
         return contactItems;
     }
 
@@ -113,7 +116,6 @@ public class ContactService {
         Contact saveContact = new Contact();
         List<Contact> existingContact = contactRepository.findAllByEmail(contactRequest.getEmail());
         saveContact.setEmail(contactRequest.getEmail());
-        saveContact.setEmail(contactRequest.getEmail());
         saveContact.setPhoneNumber(contactRequest.getPhoneNumber());
         saveContact.setLinkedId(existingContact.stream()
                 .min(Comparator.comparing(Contact::getId)).get().getId());
@@ -142,7 +144,7 @@ public class ContactService {
     }
 
     public boolean existingEmail(String email) {
-        return contactRepository.findByEmail(email) != null;
+        return contactRepository.existsByEmail(email);
     }
 
     public boolean existingPhoneNumber(String phoneNumber) {
@@ -155,6 +157,10 @@ public class ContactService {
 
     public Contact findByEmail(String email) {
         return contactRepository.findByEmail(email);
+    }
+
+    public List<Contact> findByEmailAndPhoneNumber(String email, String phoneNumber) {
+        return contactRepository.findAllByEmailAndPhoneNumber(email,phoneNumber);
     }
 
     public List<Contact> findByPhoneNumber(String phoneNumber) {
