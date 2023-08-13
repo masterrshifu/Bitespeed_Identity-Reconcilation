@@ -27,7 +27,6 @@ public class ContactService {
         List<Contact> contactList = new ArrayList<>();
         String email = contactRequest.getEmail();
         String phoneNumber = contactRequest.getPhoneNumber();
-
         if(email != null && phoneNumber != null) {
                 saveContact(contactRequest);
                 contactList.addAll(findAllByEmail(contactRequest.getEmail()));
@@ -35,19 +34,16 @@ public class ContactService {
                 contactList = contactList.stream().distinct().collect(Collectors.toList());
                 saveContact = showSaveContactResponse(contactList);
         }
-
         if(email == null) {
             contactList.addAll(contactRepository.findAllByPhoneNumber(phoneNumber));
             contactList.addAll(contactRepository.findAllByEmail(contactList.get(0).getEmail()));
             saveContact = showSavedContactResponse(contactList);
         }
-
         if(phoneNumber == null) {
             contactList.addAll(contactRepository.findAllByEmail(email));
             contactList.addAll(contactRepository.findAllByPhoneNumber(contactList.get(0).getPhoneNumber()));
             saveContact = showSavedContactResponse(contactList);
         }
-
         return saveContact;
     }
 
@@ -55,7 +51,6 @@ public class ContactService {
     public ContactItems showSavedContactResponse(List<Contact> contactList) {
 
         ContactItems contactItems = new ContactItems();
-
         contactItems.setPrimaryContactId(contactList.stream()
                 .min(Comparator.comparing(Contact::getId)).get().getId());
         contactItems.setEmails(contactList.stream().map(Contact::getEmail).distinct().collect(Collectors.toList()));
@@ -65,17 +60,12 @@ public class ContactService {
     }
 
 
-    public void saveContact(ContactRequest contactRequest) throws Exception
+    public void saveContact(ContactRequest contactRequest)
     {
-        try {
             saveContactInfo(contactRequest);
-        } catch(Exception ex) {
-            System.out.println(ex);
-        }
-
     }
 
-    public Contact saveContactInfo(ContactRequest contactRequest) {
+    public void saveContactInfo(ContactRequest contactRequest) {
 
         Contact saveContact = new Contact();
         if(!existingEmail(contactRequest.getEmail()) && !existingPhoneNumber(contactRequest.getPhoneNumber())) {
@@ -86,17 +76,14 @@ public class ContactService {
             saveContact.setUpdatedAt(LocalDateTime.now());
             saveContact.setDeletedAt(null);
             saveContact.setLinkedId(null);
-
             contactRepository.save(saveContact);
         }
-
         else if(existingEmail(contactRequest.getEmail()) && !existingPhoneNumber(contactRequest.getPhoneNumber())) {
             saveContactIfExistingEmail(contactRequest);
         }
         else if(!existingEmail(contactRequest.getEmail()) && existingPhoneNumber(contactRequest.getPhoneNumber())) {
             saveContactIfExistingPhoneNumber(contactRequest);
         }
-        return saveContact;
     }
 
     public ContactItems showSaveContactResponse(List<Contact> contactList) {
