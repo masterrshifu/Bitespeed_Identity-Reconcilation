@@ -5,14 +5,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class ContactItems {
 
-    private int primaryContactId;
-    private String emails;
-    private String phoneNumbers;
-    private int secondaryContactIds;
+    private Integer primaryContactId;
+    private List<String> emails;
+    private List<String> phoneNumbers;
+    private List<Integer> secondaryContactIds;
 }

@@ -1,5 +1,6 @@
 package com.bitespeed.identityreconcilation.controller;
 
+import com.bitespeed.identityreconcilation.dto.ContactItems;
 import com.bitespeed.identityreconcilation.model.Contact;
 import com.bitespeed.identityreconcilation.model.ContactRequest;
 import com.bitespeed.identityreconcilation.service.ContactService;
@@ -20,9 +21,9 @@ public class ContactController {
     private ContactService contactService;
 
     @PostMapping("/identify")
-    public ResponseEntity<Contact> saveUser(@RequestBody ContactRequest contactRequest) throws Exception {
+    public ResponseEntity<ContactItems> saveUser(@RequestBody ContactRequest contactRequest) throws Exception {
         try {
-            Contact saveContact = contactService.saveContact(contactRequest);
+            ContactItems saveContact = contactService.saveContactResponse(contactRequest);
             return new ResponseEntity<>(saveContact, HttpStatus.OK);
         } catch (Exception ex) {
             throw ex;

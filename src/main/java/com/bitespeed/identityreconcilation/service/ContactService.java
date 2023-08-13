@@ -1,6 +1,6 @@
 package com.bitespeed.identityreconcilation.service;
 
-import com.bitespeed.identityreconcilation.exception.ContactError;
+import com.bitespeed.identityreconcilation.dto.ContactItems;
 import com.bitespeed.identityreconcilation.model.Contact;
 import com.bitespeed.identityreconcilation.model.ContactRequest;
 import com.bitespeed.identityreconcilation.repository.ContactRepository;
@@ -9,8 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,12 +21,55 @@ public class ContactService {
     private ContactRepository contactRepository;
 
 
-    public Contact saveContact(ContactRequest contactRequest) throws Exception
-    {
-        return saveContactInfo(contactRequest);
+    public ContactItems saveContactResponse(ContactRequest contactRequest) throws Exception {
+
+        ContactItems saveContact = new ContactItems();
+        List<Contact> contactList = new ArrayList<>();
+        String email = contactRequest.getEmail();
+        String phoneNumber = contactRequest.getPhoneNumber();
+        boolean isEmailPresent = existingEmail(email);
+        boolean isPhonePresent = existingPhoneNumber(phoneNumber);
+
+        if(email != null && phoneNumber != null) {
+                saveContact(contactRequest);
+                contactList.addAll(findAllByEmail(contactRequest.getEmail()));
+                contactList.addAll(findAllByPhoneNUmber(contactRequest.getPhoneNumber()));
+                saveContact = showSaveContactResponse(contactList);
+        }
+
+        if(email == null) {
+            contactList = contactRepository.findAllByPhoneNumber(phoneNumber);
+            saveContact = showSavedContactResponse(contactList);
+        }
+
+        if(phoneNumber == null) {
+            contactList = contactRepository.findAllByEmail(email);
+            saveContact = showSavedContactResponse(contactList);
+        }
+
+        return saveContact;
     }
 
-    public Contact saveContactInfo(ContactRequest contactRequest) throws ContactError {
+
+    public ContactItems showSavedContactResponse(List<Contact> contactList) {
+
+        ContactItems contactItems = new ContactItems();
+
+        contactItems.setPrimaryContactId(contactList.stream()
+                .min(Comparator.comparing(Contact::getId)).get().getId());
+        contactItems.setEmails(contactList.stream().map(Contact::getEmail).distinct().collect(Collectors.toList()));
+        contactItems.setPhoneNumbers(contactList.stream().map(Contact::getPhoneNumber).distinct().collect(Collectors.toList()));
+        contactItems.setSecondaryContactIds(contactList.stream().filter(contact -> contact.getLinkPrecedence() == "Secondary").map(Contact::getId).distinct().collect(Collectors.toList()));
+        return contactItems;
+    }
+
+
+    public void saveContact(ContactRequest contactRequest) throws Exception
+    {
+        saveContactInfo(contactRequest);
+    }
+
+    public Contact saveContactInfo(ContactRequest contactRequest) {
 
         Contact saveContact = new Contact();
         if(!existingEmail(contactRequest.getEmail()) && !existingPhoneNumber(contactRequest.getPhoneNumber())) {
@@ -42,21 +85,32 @@ public class ContactService {
         }
 
         else if(existingEmail(contactRequest.getEmail()) && !existingPhoneNumber(contactRequest.getPhoneNumber())) {
-            saveContact = saveContactIfExistingEmail(contactRequest);
+            saveContactIfExistingEmail(contactRequest);
         }
         else if(!existingEmail(contactRequest.getEmail()) && existingPhoneNumber(contactRequest.getPhoneNumber())) {
-            saveContact = saveContactIfExistingPhoneNumber(contactRequest);
+            saveContactIfExistingPhoneNumber(contactRequest);
         }
-        else {
-            throw new ContactError("Contact Already Exists with Email or Phone");
-        }
-
         return saveContact;
     }
 
-    public Contact saveContactIfExistingEmail(ContactRequest contactRequest) {
+    public ContactItems showSaveContactResponse(List<Contact> contactList) {
+
+        ContactItems contactItems = new ContactItems();
+        if(contactList.size() == 1) {
+            Contact contact = contactList.get(0);
+            contactItems.setPrimaryContactId(contact.getId());
+            contactItems.setEmails(Arrays.asList(contact.getEmail()));
+            contactItems.setPhoneNumbers(Arrays.asList(contact.getPhoneNumber()));
+            contactItems.setSecondaryContactIds(new ArrayList<>());
+        } else {
+            contactItems = showSavedContactResponse(contactList);
+        }
+
+        return contactItems;
+    }
+
+    public void saveContactIfExistingEmail(ContactRequest contactRequest) {
         Contact saveContact = new Contact();
-//        Contact existingContact = contactRepository.findByEmail(contactRequest.getEmail());
         List<Contact> existingContact = contactRepository.findAllByEmail(contactRequest.getEmail());
         saveContact.setEmail(contactRequest.getEmail());
         saveContact.setEmail(contactRequest.getEmail());
@@ -70,10 +124,9 @@ public class ContactService {
 
         contactRepository.save(saveContact);
 
-        return saveContact;
     }
 
-    public Contact saveContactIfExistingPhoneNumber(ContactRequest contactRequest) {
+    public void saveContactIfExistingPhoneNumber(ContactRequest contactRequest) {
         Contact saveContact = new Contact();
         List<Contact> existingContact = contactRepository.findAllByPhoneNumber(contactRequest.getPhoneNumber());
         saveContact.setEmail(contactRequest.getEmail());
@@ -86,16 +139,10 @@ public class ContactService {
         saveContact.setDeletedAt(null);
 
         contactRepository.save(saveContact);
-
-        return saveContact;
     }
 
     public boolean existingEmail(String email) {
-
-        if(contactRepository.findByEmail(email) != null) {
-            return true;
-        }
-        return false;
+        return contactRepository.findByEmail(email) != null;
     }
 
     public boolean existingPhoneNumber(String phoneNumber) {
@@ -108,6 +155,18 @@ public class ContactService {
 
     public Contact findByEmail(String email) {
         return contactRepository.findByEmail(email);
+    }
+
+    public List<Contact> findByPhoneNumber(String phoneNumber) {
+        return contactRepository.findAllByPhoneNumber(phoneNumber);
+    }
+
+    public List<Contact> findAllByEmail(String email) {
+        return contactRepository.findAllByEmail(email);
+    }
+
+    public List<Contact> findAllByPhoneNUmber(String phoneNumber) {
+        return contactRepository.findAllByPhoneNumber(phoneNumber);
     }
 
 
