@@ -27,14 +27,12 @@ public class ContactService {
         List<Contact> contactList = new ArrayList<>();
         String email = contactRequest.getEmail();
         String phoneNumber = contactRequest.getPhoneNumber();
-        boolean isEmailPresent = existingEmail(email);
-        boolean isPhonePresent = existingPhoneNumber(phoneNumber);
 
         if(email != null && phoneNumber != null) {
                 saveContact(contactRequest);
                 contactList.addAll(findAllByEmail(contactRequest.getEmail()));
                 contactList.addAll(findAllByPhoneNUmber(contactRequest.getPhoneNumber()));
-                contactList.stream().distinct().collect(Collectors.toList());
+                contactList = contactList.stream().distinct().collect(Collectors.toList());
                 saveContact = showSaveContactResponse(contactList);
         }
 
@@ -69,7 +67,12 @@ public class ContactService {
 
     public void saveContact(ContactRequest contactRequest) throws Exception
     {
-        saveContactInfo(contactRequest);
+        try {
+            saveContactInfo(contactRequest);
+        } catch(Exception ex) {
+            System.out.println(ex);
+        }
+
     }
 
     public Contact saveContactInfo(ContactRequest contactRequest) {
@@ -151,20 +154,8 @@ public class ContactService {
         return contactRepository.existsByPhoneNumber(phoneNumber);
     }
 
-    public Contact findByEmail(ContactRequest contactRequest) {
-        return contactRepository.findByEmail(contactRequest.getEmail());
-    }
-
     public Contact findByEmail(String email) {
         return contactRepository.findByEmail(email);
-    }
-
-    public List<Contact> findByEmailAndPhoneNumber(String email, String phoneNumber) {
-        return contactRepository.findAllByEmailAndPhoneNumber(email,phoneNumber);
-    }
-
-    public List<Contact> findByPhoneNumber(String phoneNumber) {
-        return contactRepository.findAllByPhoneNumber(phoneNumber);
     }
 
     public List<Contact> findAllByEmail(String email) {
