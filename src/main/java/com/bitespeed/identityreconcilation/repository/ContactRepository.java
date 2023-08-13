@@ -1,6 +1,6 @@
-package com.bitespeed.identifyreconcilation.repository;
+package com.bitespeed.identityreconcilation.repository;
 
-import com.bitespeed.identifyreconcilation.model.Contact;
+import com.bitespeed.identityreconcilation.model.Contact;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,7 +1,5 @@
-package com.bitespeed.identifyreconcilation.model;
+package com.bitespeed.identityreconcilation.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Id;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;

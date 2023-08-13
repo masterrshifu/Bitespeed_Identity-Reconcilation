@@ -1,8 +1,8 @@
-package com.bitespeed.identifyreconcilation.controller;
+package com.bitespeed.identityreconcilation.controller;
 
-import com.bitespeed.identifyreconcilation.model.Contact;
-import com.bitespeed.identifyreconcilation.model.ContactRequest;
-import com.bitespeed.identifyreconcilation.service.ContactService;
+import com.bitespeed.identityreconcilation.model.Contact;
+import com.bitespeed.identityreconcilation.model.ContactRequest;
+import com.bitespeed.identityreconcilation.service.ContactService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

@@ -1,4 +1,4 @@
-package com.bitespeed.identifyreconcilation.model;
+package com.bitespeed.identityreconcilation.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

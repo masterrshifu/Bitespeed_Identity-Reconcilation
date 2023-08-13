@@ -1,4 +1,4 @@
-package com.bitespeed.identifyreconcilation.exception;
+package com.bitespeed.identityreconcilation.exception;
 
 public class ContactError extends Exception {
 

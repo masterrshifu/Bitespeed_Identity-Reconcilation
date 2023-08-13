@@ -1,9 +1,9 @@
-package com.bitespeed.identifyreconcilation.service;
+package com.bitespeed.identityreconcilation.service;
 
-import com.bitespeed.identifyreconcilation.exception.ContactError;
-import com.bitespeed.identifyreconcilation.model.Contact;
-import com.bitespeed.identifyreconcilation.model.ContactRequest;
-import com.bitespeed.identifyreconcilation.repository.ContactRepository;
+import com.bitespeed.identityreconcilation.exception.ContactError;
+import com.bitespeed.identityreconcilation.model.Contact;
+import com.bitespeed.identityreconcilation.model.ContactRequest;
+import com.bitespeed.identityreconcilation.repository.ContactRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,7 +28,7 @@ public class ContactService {
     public Contact saveContactInfo(ContactRequest contactRequest) throws ContactError {
 
         Contact saveContact = new Contact();
-        if(!existingContact(contactRequest.getEmail()) && !existingPhoneNumber(contactRequest.getPhoneNumber())) {
+        if(!existingEmail(contactRequest.getEmail()) && !existingPhoneNumber(contactRequest.getPhoneNumber())) {
             saveContact.setEmail(contactRequest.getEmail());
             saveContact.setPhoneNumber(contactRequest.getPhoneNumber());
             saveContact.setLinkPrecedence("Primary");
@@ -40,8 +40,11 @@ public class ContactService {
             contactRepository.save(saveContact);
         }
 
-        else if(existingContact(contactRequest.getEmail()) && !existingPhoneNumber(contactRequest.getPhoneNumber())) {
+        else if(existingEmail(contactRequest.getEmail()) && !existingPhoneNumber(contactRequest.getPhoneNumber())) {
             saveContact = saveContactIfExistingEmail(contactRequest);
+        }
+        else if(!existingEmail(contactRequest.getEmail()) && existingPhoneNumber(contactRequest.getPhoneNumber())) {
+            saveContact = saveContactIfExistingPhoneNumber(contactRequest);
         }
         else {
             throw new ContactError("Contact Already Exists with Email or Phone");
@@ -66,7 +69,23 @@ public class ContactService {
         return saveContact;
     }
 
-    public boolean existingContact(String email) {
+    public Contact saveContactIfExistingPhoneNumber(ContactRequest contactRequest) {
+        Contact saveContact = new Contact();
+        Contact existingContact = contactRepository.findByPhoneNumber(contactRequest.getPhoneNumber());
+        saveContact.setEmail(contactRequest.getEmail());
+        saveContact.setPhoneNumber(contactRequest.getPhoneNumber());
+        saveContact.setLinkedId(existingContact.getId());
+        saveContact.setLinkPrecedence("Secondary");
+        saveContact.setCreatedAt(LocalDateTime.now());
+        saveContact.setUpdatedAt(LocalDateTime.now());
+        saveContact.setDeletedAt(null);
+
+        contactRepository.save(saveContact);
+
+        return saveContact;
+    }
+
+    public boolean existingEmail(String email) {
 
         if(contactRepository.findByEmail(email) != null) {
             return true;

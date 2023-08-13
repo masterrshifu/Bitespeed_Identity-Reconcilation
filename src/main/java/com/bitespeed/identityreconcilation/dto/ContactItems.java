@@ -1,4 +1,4 @@
-package com.bitespeed.identifyreconcilation.dto;
+package com.bitespeed.identityreconcilation.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
