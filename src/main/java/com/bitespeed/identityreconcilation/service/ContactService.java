@@ -55,7 +55,7 @@ public class ContactService {
                 .min(Comparator.comparing(Contact::getId)).get().getId());
         contactItems.setEmails(contactList.stream().map(Contact::getEmail).distinct().collect(Collectors.toList()));
         contactItems.setPhoneNumbers(contactList.stream().map(Contact::getPhoneNumber).distinct().collect(Collectors.toList()));
-        contactItems.setSecondaryContactIds(contactList.stream().filter(contact -> contact.getLinkPrecedence().equals("Secondary")).map(Contact::getLinkedId).distinct().collect(Collectors.toList()));
+        contactItems.setSecondaryContactIds(contactList.stream().filter(contact -> contact.getLinkPrecedence().equals("Secondary")).map(Contact::getId).distinct().collect(Collectors.toList()));
         return contactItems;
     }
 
