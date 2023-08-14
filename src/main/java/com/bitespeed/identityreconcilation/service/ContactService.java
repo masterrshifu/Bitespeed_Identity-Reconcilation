@@ -1,6 +1,7 @@
 package com.bitespeed.identityreconcilation.service;
 
 import com.bitespeed.identityreconcilation.dto.ContactItems;
+import com.bitespeed.identityreconcilation.dto.ContactResponse;
 import com.bitespeed.identityreconcilation.model.Contact;
 import com.bitespeed.identityreconcilation.model.ContactRequest;
 import com.bitespeed.identityreconcilation.repository.ContactRepository;
@@ -21,18 +22,29 @@ public class ContactService {
     private ContactRepository contactRepository;
 
 
-    public ContactItems saveContactResponse(ContactRequest contactRequest) {
+    public ContactResponse saveContactResponse(ContactRequest contactRequest) {
 
-        ContactItems saveContact = new ContactItems();
+        ContactResponse saveContact = new ContactResponse();
         List<Contact> contactList = new ArrayList<>();
         String email = contactRequest.getEmail();
         String phoneNumber = contactRequest.getPhoneNumber();
+        boolean isEmailPresent = existingEmail(email);
+        boolean isPhoneNumberPresent = existingPhoneNumber(phoneNumber);
         if(email != null && phoneNumber != null) {
+            if(isEmailPresent && isPhoneNumberPresent) {
+                Contact contact = findByEmail(email);
+                if(!contact.getPhoneNumber().equals(phoneNumber)) {
+
+                }
+
+            }
+            else {
                 saveContact(contactRequest);
                 contactList.addAll(findAllByEmail(contactRequest.getEmail()));
                 contactList.addAll(findAllByPhoneNUmber(contactRequest.getPhoneNumber()));
                 contactList = contactList.stream().distinct().collect(Collectors.toList());
                 saveContact = showSaveContactResponse(contactList);
+            }
         }
         if(email == null) {
             contactList.addAll(contactRepository.findAllByPhoneNumber(phoneNumber));
@@ -44,19 +56,25 @@ public class ContactService {
             contactList.addAll(contactRepository.findAllByPhoneNumber(contactList.get(0).getPhoneNumber()));
             saveContact = showSavedContactResponse(contactList);
         }
+
+
         return saveContact;
     }
 
 
-    public ContactItems showSavedContactResponse(List<Contact> contactList) {
+    public ContactResponse showSavedContactResponse(List<Contact> contactList) {
 
+        ContactResponse contactResponse = new ContactResponse();
         ContactItems contactItems = new ContactItems();
+        List<ContactItems> contactItemsList = new ArrayList<>();
         contactItems.setPrimaryContactId(contactList.stream()
                 .min(Comparator.comparing(Contact::getId)).get().getId());
         contactItems.setEmails(contactList.stream().map(Contact::getEmail).distinct().collect(Collectors.toList()));
         contactItems.setPhoneNumbers(contactList.stream().map(Contact::getPhoneNumber).distinct().collect(Collectors.toList()));
         contactItems.setSecondaryContactIds(contactList.stream().filter(contact -> contact.getLinkPrecedence().equals("Secondary")).map(Contact::getId).distinct().collect(Collectors.toList()));
-        return contactItems;
+        contactItemsList.add(contactItems);
+        contactResponse.setContact(contactItemsList.stream().distinct().collect(Collectors.toList()));
+        return contactResponse;
     }
 
 
@@ -86,8 +104,10 @@ public class ContactService {
         }
     }
 
-    public ContactItems showSaveContactResponse(List<Contact> contactList) {
+    public ContactResponse showSaveContactResponse(List<Contact> contactList) {
 
+        ContactResponse contactResponse = new ContactResponse();
+        List<ContactItems> contactItemsList = new ArrayList<>();
         ContactItems contactItems = new ContactItems();
         if(contactList.size() == 1) {
             Contact contact = contactList.get(0);
@@ -95,11 +115,15 @@ public class ContactService {
             contactItems.setEmails(Arrays.asList(contact.getEmail()));
             contactItems.setPhoneNumbers(Arrays.asList(contact.getPhoneNumber()));
             contactItems.setSecondaryContactIds(new ArrayList<>());
+            contactItemsList.add(contactItems);
+            contactItemsList.add(contactItems);
+            contactResponse.setContact(contactItemsList.stream().distinct().collect(Collectors.toList()));
+            return contactResponse;
         } else {
-            contactItems = showSavedContactResponse(contactList);
+            contactResponse = showSavedContactResponse(contactList);
+            return contactResponse;
         }
 
-        return contactItems;
     }
 
     public void saveContactIfExistingEmail(ContactRequest contactRequest) {
@@ -120,11 +144,26 @@ public class ContactService {
 
     public void saveContactIfExistingPhoneNumber(ContactRequest contactRequest) {
         Contact saveContact = new Contact();
+        Contact getContactDetails = findByPhoneNumber(contactRequest.getPhoneNumber());
+        saveContact.setEmail(contactRequest.getEmail());
+        saveContact.setPhoneNumber(contactRequest.getPhoneNumber());
+        saveContact.setLinkedId(getContactDetails.getId());
+        saveContact.setLinkPrecedence("Secondary");
+        saveContact.setCreatedAt(LocalDateTime.now());
+        saveContact.setUpdatedAt(LocalDateTime.now());
+        saveContact.setDeletedAt(null);
+
+        contactRepository.save(saveContact);
+    }
+
+    public void saveContactIfExistingEmailAndPhoneNumber(ContactRequest contactRequest, String phoneNumber) {
+        Contact saveContact = new Contact();
+        Contact getContactDetails = findByPhoneNumber(phoneNumber);
         List<Contact> existingContact = contactRepository.findAllByPhoneNumber(contactRequest.getPhoneNumber());
         saveContact.setEmail(contactRequest.getEmail());
         saveContact.setPhoneNumber(contactRequest.getPhoneNumber());
         saveContact.setLinkedId(existingContact.stream()
-                        .min(Comparator.comparing(Contact::getId)).get().getId());
+                .min(Comparator.comparing(Contact::getId)).get().getId());
         saveContact.setLinkPrecedence("Secondary");
         saveContact.setCreatedAt(LocalDateTime.now());
         saveContact.setUpdatedAt(LocalDateTime.now());
@@ -143,6 +182,10 @@ public class ContactService {
 
     public Contact findByEmail(String email) {
         return contactRepository.findByEmail(email);
+    }
+
+    public Contact findByPhoneNumber(String phoneNumber) {
+        return contactRepository.findByPhoneNumber(phoneNumber);
     }
 
     public List<Contact> findAllByEmail(String email) {
