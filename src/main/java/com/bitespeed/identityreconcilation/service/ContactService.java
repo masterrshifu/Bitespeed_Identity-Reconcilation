@@ -32,7 +32,7 @@ public class ContactService {
                 contactList.addAll(findAllByEmail(contactRequest.getEmail()));
                 contactList.addAll(findAllByPhoneNUmber(contactRequest.getPhoneNumber()));
                 contactList = contactList.stream().distinct().collect(Collectors.toList());
-                saveContact = showSaveContactResponse(contactList);
+                saveContact = showSaveContactResponse(contactList,email);
         }
         if(email == null) {
             contactList.addAll(contactRepository.findAllByPhoneNumber(phoneNumber));
@@ -48,11 +48,13 @@ public class ContactService {
     }
 
 
-    public ContactItems showSavedContactResponse(List<Contact> contactList) {
+    public ContactItems showSavedContactResponse(List<Contact> contactList, String email) {
 
         ContactItems contactItems = new ContactItems();
         contactItems.setPrimaryContactId(contactList.stream()
-                .min(Comparator.comparing(Contact::getId)).get().getId());
+                .filter(contact -> contact.getEmail().equals(email))
+                .map(Contact::getId).distinct().collect(Collectors.toList()).stream()
+                .mapToInt(Integer::intValue).sum());
         contactItems.setEmails(contactList.stream().map(Contact::getEmail).distinct().collect(Collectors.toList()));
         contactItems.setPhoneNumbers(contactList.stream().map(Contact::getPhoneNumber).distinct().collect(Collectors.toList()));
         contactItems.setSecondaryContactIds(contactList.stream().filter(contact -> contact.getLinkPrecedence().equals("Secondary")).map(Contact::getLinkedId).distinct().collect(Collectors.toList()));
@@ -86,7 +88,7 @@ public class ContactService {
         }
     }
 
-    public ContactItems showSaveContactResponse(List<Contact> contactList) {
+    public ContactItems showSaveContactResponse(List<Contact> contactList, String email) {
 
         ContactItems contactItems = new ContactItems();
         if(contactList.size() == 1) {
@@ -96,7 +98,7 @@ public class ContactService {
             contactItems.setPhoneNumbers(Arrays.asList(contact.getPhoneNumber()));
             contactItems.setSecondaryContactIds(new ArrayList<>());
         } else {
-            contactItems = showSavedContactResponse(contactList);
+            contactItems = showSavedContactResponse(contactList, email);
         }
 
         return contactItems;
