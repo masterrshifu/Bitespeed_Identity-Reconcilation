@@ -1,0 +1,5 @@
+# Created at 2023-08-14T14:35:34.886
+Boot Manifest-JAR contains absolute paths in classpath 'D:\identity-reconcilation\identity-reconcilation\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+'other' has different root
+
