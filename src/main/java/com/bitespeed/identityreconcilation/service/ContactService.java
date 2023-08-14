@@ -32,9 +32,13 @@ public class ContactService {
         boolean isPhoneNumberPresent = existingPhoneNumber(phoneNumber);
         if(email != null && phoneNumber != null) {
             if(isEmailPresent && isPhoneNumberPresent) {
-                Contact contact = findByEmail(email);
-                if(!contact.getPhoneNumber().equals(phoneNumber)) {
-
+                List<Contact> contactListEmail = findAllByEmail(email);
+                if(!contactListEmail.get(0).getPhoneNumber().equals(phoneNumber)) {
+                    saveContactIfExistingEmailAndPhoneNumber(contactRequest,phoneNumber);
+                    contactList.addAll(findAllByEmail(contactRequest.getEmail()));
+                    contactList.addAll(findAllByPhoneNUmber(contactRequest.getPhoneNumber()));
+                    contactList = contactList.stream().distinct().collect(Collectors.toList());
+                    saveContact = showSaveContactResponse(contactList);
                 }
 
             }
@@ -134,9 +138,7 @@ public class ContactService {
         saveContact.setLinkedId(existingContact.stream()
                 .min(Comparator.comparing(Contact::getId)).get().getId());
         saveContact.setLinkPrecedence("Secondary");
-        saveContact.setCreatedAt(LocalDateTime.now());
         saveContact.setUpdatedAt(LocalDateTime.now());
-        saveContact.setDeletedAt(null);
 
         contactRepository.save(saveContact);
 
@@ -144,32 +146,25 @@ public class ContactService {
 
     public void saveContactIfExistingPhoneNumber(ContactRequest contactRequest) {
         Contact saveContact = new Contact();
-        Contact getContactDetails = findByPhoneNumber(contactRequest.getPhoneNumber());
+        List<Contact> getContactDetails = findAllByPhoneNUmber(contactRequest.getPhoneNumber());
         saveContact.setEmail(contactRequest.getEmail());
         saveContact.setPhoneNumber(contactRequest.getPhoneNumber());
-        saveContact.setLinkedId(getContactDetails.getId());
+        saveContact.setLinkedId(getContactDetails.get(getContactDetails.size()-1).getId());
         saveContact.setLinkPrecedence("Secondary");
-        saveContact.setCreatedAt(LocalDateTime.now());
         saveContact.setUpdatedAt(LocalDateTime.now());
-        saveContact.setDeletedAt(null);
 
         contactRepository.save(saveContact);
     }
 
     public void saveContactIfExistingEmailAndPhoneNumber(ContactRequest contactRequest, String phoneNumber) {
-        Contact saveContact = new Contact();
-        Contact getContactDetails = findByPhoneNumber(phoneNumber);
-        List<Contact> existingContact = contactRepository.findAllByPhoneNumber(contactRequest.getPhoneNumber());
-        saveContact.setEmail(contactRequest.getEmail());
-        saveContact.setPhoneNumber(contactRequest.getPhoneNumber());
-        saveContact.setLinkedId(existingContact.stream()
-                .min(Comparator.comparing(Contact::getId)).get().getId());
-        saveContact.setLinkPrecedence("Secondary");
-        saveContact.setCreatedAt(LocalDateTime.now());
-        saveContact.setUpdatedAt(LocalDateTime.now());
-        saveContact.setDeletedAt(null);
 
+        Contact saveContact = findByPhoneNumber(phoneNumber);
+        List<Contact> getPrimaryContactDetails = findAllByEmail(contactRequest.getEmail());
+        saveContact.setLinkedId(getPrimaryContactDetails.get(0).getId());
+        saveContact.setLinkPrecedence("Secondary");
+        saveContact.setUpdatedAt(LocalDateTime.now());
         contactRepository.save(saveContact);
+
     }
 
     public boolean existingEmail(String email) {
