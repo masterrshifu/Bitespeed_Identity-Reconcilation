@@ -32,27 +32,27 @@ public class ContactService {
                 contactList.addAll(findAllByEmail(contactRequest.getEmail()));
                 contactList.addAll(findAllByPhoneNUmber(contactRequest.getPhoneNumber()));
                 contactList = contactList.stream().distinct().collect(Collectors.toList());
-                saveContact = showSaveContactResponse(contactList,email);
+                saveContact = showSaveContactResponse(contactList);
         }
         if(email == null) {
             contactList.addAll(contactRepository.findAllByPhoneNumber(phoneNumber));
             contactList.addAll(contactRepository.findAllByEmail(contactList.get(0).getEmail()));
-            saveContact = showSavedContactResponse(contactList,email);
+            saveContact = showSavedContactResponse(contactList);
         }
         if(phoneNumber == null) {
             contactList.addAll(contactRepository.findAllByEmail(email));
             contactList.addAll(contactRepository.findAllByPhoneNumber(contactList.get(0).getPhoneNumber()));
-            saveContact = showSavedContactResponse(contactList,email);
+            saveContact = showSavedContactResponse(contactList);
         }
         return saveContact;
     }
 
 
-    public ContactItems showSavedContactResponse(List<Contact> contactList, String email) {
+    public ContactItems showSavedContactResponse(List<Contact> contactList) {
 
         ContactItems contactItems = new ContactItems();
-        Contact findContact = findByEmail(email);
-        contactItems.setPrimaryContactId(findContact.getId());
+        contactItems.setPrimaryContactId(contactList.stream()
+                .min(Comparator.comparing(Contact::getId)).get().getId());
         contactItems.setEmails(contactList.stream().map(Contact::getEmail).distinct().collect(Collectors.toList()));
         contactItems.setPhoneNumbers(contactList.stream().map(Contact::getPhoneNumber).distinct().collect(Collectors.toList()));
         contactItems.setSecondaryContactIds(contactList.stream().filter(contact -> contact.getLinkPrecedence().equals("Secondary")).map(Contact::getLinkedId).distinct().collect(Collectors.toList()));
@@ -86,7 +86,7 @@ public class ContactService {
         }
     }
 
-    public ContactItems showSaveContactResponse(List<Contact> contactList, String email) {
+    public ContactItems showSaveContactResponse(List<Contact> contactList) {
 
         ContactItems contactItems = new ContactItems();
         if(contactList.size() == 1) {
@@ -96,7 +96,7 @@ public class ContactService {
             contactItems.setPhoneNumbers(Arrays.asList(contact.getPhoneNumber()));
             contactItems.setSecondaryContactIds(new ArrayList<>());
         } else {
-            contactItems = showSavedContactResponse(contactList, email);
+            contactItems = showSavedContactResponse(contactList);
         }
 
         return contactItems;
