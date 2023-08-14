@@ -21,7 +21,7 @@ public class ContactService {
     private ContactRepository contactRepository;
 
 
-    public ContactItems saveContactResponse(ContactRequest contactRequest) throws Exception {
+    public ContactItems saveContactResponse(ContactRequest contactRequest) {
 
         ContactItems saveContact = new ContactItems();
         List<Contact> contactList = new ArrayList<>();
